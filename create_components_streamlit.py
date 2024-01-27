@@ -17,21 +17,21 @@ def normalize_json(param_json_data):
         df = pd.json_normalize(param_json_data)
         return df
     else:
-        return None
+        return pd.DataFrame()
 def sum_group_by_dataframe(param_df,param_groupby,param_sum):
     '''
     param_df: dataframe
     param_sum: List
     param_groupby: List
     '''
-    if len(param_groupby) > 0 and len(param_sum) > 0:
+    if len(param_groupby) > 0 & len(param_sum) > 0:
         sum_dict = {}
         for col in param_sum:
             sum_dict[col] = 'sum'
         df = param_df.groupby(param_groupby).agg(sum_dict).reset_index()
         return df
     else:
-        return None
+        return pd.DataFrame()
 
 st.header(str(current_year),divider="green")
 st.subheader(current_month_name,divider="grey")
@@ -71,7 +71,7 @@ with col1:
         # Create a selectbox to select the month
         selected_month = st.selectbox("Select a month:", months)
         get_data = normalize_json(amdb.get_data_from_collection(amdb.set_client,"client_services","year_"+str(current_year),{'month':selected_month}))
-        if get_data != None:
+        if get_data.empty == False:
             selected_month_columns = ["event_date","client_name", "amount"]
             selected_month_df = get_data[selected_month_columns]
             st.dataframe(selected_month_df)
@@ -79,6 +79,6 @@ with col2:
     with st.expander("YTD Report"):
         selected_year = st.selectbox("Current:", [current_year])   
         get_data = normalize_json(amdb.get_data_from_collection(amdb.set_client,"client_services","year_"+str(current_year)))
-        if get_data != None:
+        if get_data.empty == False:
             sum_ytd = sum_group_by_dataframe(get_data,['client_name','month'],['amount'])
             st.table(sum_ytd)
