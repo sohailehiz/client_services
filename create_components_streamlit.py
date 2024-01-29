@@ -33,7 +33,9 @@ def sum_group_by_dataframe(param_df,param_groupby,param_sum):
     else:
         return pd.DataFrame()
 
-login_value = False
+if "login_value" not in st.session_state:
+    # set the initial default value of the slider widget
+    st.session_state.login_value = False
 
 with st.sidebar:
     st.header("Login",divider="green")
@@ -57,17 +59,17 @@ with st.sidebar:
             
         get_creds = uname+upass
         if get_creds == user_name1+user_pass1:
-            login_value = True
-            
-    elif logout:
-        st.rerun()
-        user_name1 = st.empty()
-        user_pass1 = st.empty()
+            st.session_state.login_value = True
     else:
         st.write('No Access')
+if logout:
+    user_name1 = st.empty()
+    user_pass1 = st.empty()
+    st.header('Please Login Again')
+    st.session_state.login_value = False
 
 
-if login_value :
+if st.session_state.login_value:
     st.header(str(current_year),divider="green")
     st.subheader(current_month_name,divider="grey")
     data = {}
