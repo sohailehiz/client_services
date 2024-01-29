@@ -24,7 +24,7 @@ def sum_group_by_dataframe(param_df,param_groupby,param_sum):
     param_sum: List
     param_groupby: List
     '''
-    if len(param_groupby) > 0 & len(param_sum) > 0:
+    if param_df.empty == False and len(param_groupby) > 0 and len(param_sum) > 0:
         sum_dict = {}
         for col in param_sum:
             sum_dict[col] = 'sum'
@@ -78,7 +78,7 @@ with col1:
 with col2:
     with st.expander("YTD Report"):
         selected_year = st.selectbox("Current:", [current_year])   
-        get_data = normalize_json(amdb.get_data_from_collection(amdb.set_client,"client_services","year_"+str(current_year)))
-        if get_data.empty == False:
-            sum_ytd = sum_group_by_dataframe(get_data,['client_name','month'],['amount'])
-            st.table(sum_ytd)
+        get_data_ytd = normalize_json(amdb.get_data_from_collection(amdb.set_client,"client_services","year_"+str(current_year)))
+        if get_data_ytd.empty == False:
+            sum_ytd = sum_group_by_dataframe(get_data_ytd,['client_name','month'],['amount'])
+            st.dataframe(sum_ytd)
