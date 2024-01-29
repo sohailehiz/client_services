@@ -33,52 +33,87 @@ def sum_group_by_dataframe(param_df,param_groupby,param_sum):
     else:
         return pd.DataFrame()
 
-st.header(str(current_year),divider="green")
-st.subheader(current_month_name,divider="grey")
-data = {}
+login_value = False
 
-with st.expander("Client Service Inputs"):
-    with st.form("Input Service Data",clear_on_submit=True, border=True):
-        client_name = st.text_input("Enter Client Name")
-        plot_calendar = st.date_input("Select Date of Event", datetime.now())
-        event_date = plot_calendar
-        amount_collected = st.number_input('Total Amount Received',value=0, placeholder="Enter Amount...")
-        # Every form must have a submit button.
-        submitted = st.form_submit_button("Submit")
-        
-        
-        if submitted:
-            data['client_name'] = client_name
-            data['event_date'] = event_date.strftime('%Y-%m-%d')
-            data['year'] = event_date.year
-            data['month'] = event_date.strftime("%B")
-            data['amount'] = amount_collected
-            if data['client_name'] != "" and data['amount'] > 0 and event_date <= current_date:
-                msg = st.json(data)
-                amdb.create_collection_if_not_exists(amdb.set_client,"client_services","year_"+str(current_year))
-                amdb.insert_data_into_collection(amdb.set_client,"client_services","year_"+str(current_year),data)
-                time.sleep(5)
-                msg.empty()
-            else:
-                st.warning("*Client Name can't be empty")
-                st.warning("*Amount can't be Zero (0)")
-                st.warning("*No future Dates")
-col1, col2 = st.columns(2)
-with col1:
-    with st.expander("Monthly Report"):
-        # Get list of month names
-        months = [calendar.month_name[i] for i in range(1, 13)]
-        # Create a selectbox to select the month
-        selected_month = st.selectbox("Select a month:", months)
-        get_data = normalize_json(amdb.get_data_from_collection(amdb.set_client,"client_services","year_"+str(current_year),{'month':selected_month}))
-        if get_data.empty == False:
-            selected_month_columns = ["event_date","client_name", "amount"]
-            selected_month_df = get_data[selected_month_columns]
-            st.dataframe(selected_month_df)
-with col2:
-    with st.expander("YTD Report"):
-        selected_year = st.selectbox("Current:", [current_year])   
-        get_data_ytd = normalize_json(amdb.get_data_from_collection(amdb.set_client,"client_services","year_"+str(current_year)))
-        if get_data_ytd.empty == False:
-            sum_ytd = sum_group_by_dataframe(get_data_ytd,['client_name','month'],['amount'])
-            st.dataframe(sum_ytd)
+with st.sidebar:
+    st.header("Login",divider="green")
+    user_name1 = st.text_input("Enter Username", value="",label_visibility='visible',placeholder="Enter username")
+    user_pass1 = st.text_input("Enter Password", value="", type="password",placeholder="Enter password")
+    collogin, collogout = st.columns(2)
+    with collogin:
+        login = st.button("Login", type="primary")
+    with collogout:   
+        logout = st.button("Logout", type="secondary")
+    if login:
+        uname = ""
+        upass = ""
+        try:
+            login_creds = amdb.get_data_from_collection(amdb.set_client,"client_services","users",{'username':user_name1})
+            uname = login_creds[0]['username']
+            upass = login_creds[0]['password']
+        except Exception as e:
+            uname = "unknown"
+            upass = "xxxxxx"
+            
+        get_creds = uname+upass
+        if get_creds == user_name1+user_pass1:
+            login_value = True
+            
+    elif logout:
+        st.rerun()
+        user_name1 = st.empty()
+        user_pass1 = st.empty()
+    else:
+        st.write('No Access')
+
+
+if login_value :
+    st.header(str(current_year),divider="green")
+    st.subheader(current_month_name,divider="grey")
+    data = {}
+
+    with st.expander("Client Service Inputs"):
+        with st.form("Input Service Data",clear_on_submit=True, border=True):
+            client_name = st.text_input("Enter Client Name")
+            plot_calendar = st.date_input("Select Date of Event", datetime.now())
+            event_date = plot_calendar
+            amount_collected = st.number_input('Total Amount Received',value=0, placeholder="Enter Amount...")
+            # Every form must have a submit button.
+            submitted = st.form_submit_button("Submit")
+            
+            
+            if submitted:
+                data['client_name'] = client_name
+                data['event_date'] = event_date.strftime('%Y-%m-%d')
+                data['year'] = event_date.year
+                data['month'] = event_date.strftime("%B")
+                data['amount'] = amount_collected
+                if data['client_name'] != "" and data['amount'] > 0 and event_date <= current_date:
+                    msg = st.json(data)
+                    amdb.create_collection_if_not_exists(amdb.set_client,"client_services","year_"+str(current_year))
+                    amdb.insert_data_into_collection(amdb.set_client,"client_services","year_"+str(current_year),data)
+                    time.sleep(5)
+                    msg.empty()
+                else:
+                    st.warning("*Client Name can't be empty")
+                    st.warning("*Amount can't be Zero (0)")
+                    st.warning("*No future Dates")
+    col1, col2 = st.columns(2)
+    with col1:
+        with st.expander("Monthly Report"):
+            # Get list of month names
+            months = [calendar.month_name[i] for i in range(1, 13)]
+            # Create a selectbox to select the month
+            selected_month = st.selectbox("Select a month:", months)
+            get_data = normalize_json(amdb.get_data_from_collection(amdb.set_client,"client_services","year_"+str(current_year),{'month':selected_month}))
+            if get_data.empty == False:
+                selected_month_columns = ["event_date","client_name", "amount"]
+                selected_month_df = get_data[selected_month_columns]
+                st.dataframe(selected_month_df)
+    with col2:
+        with st.expander("YTD Report"):
+            selected_year = st.selectbox("Current:", [current_year])   
+            get_data_ytd = normalize_json(amdb.get_data_from_collection(amdb.set_client,"client_services","year_"+str(current_year)))
+            if get_data_ytd.empty == False:
+                sum_ytd = sum_group_by_dataframe(get_data_ytd,['client_name','month'],['amount'])
+                st.dataframe(sum_ytd)
